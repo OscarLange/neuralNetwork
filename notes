@@ -1,20 +1,23 @@
-primer = None
-        tmpW = []
-        tmpb = []
-        for index in range(len(A)-1,-1,-1):
-            currA = A[index]
-            if(index == len(A)-1):
-                primer = self.dOutput(currA)
-            else:
-                primer = self.dhidden(self.W[index+1], currA, primer)
-            #dont update as used in later execution
-            tmp = np.dot(np.dot(primer,self.dLinCombW(currA)), (1/self.n))
-            print(tmp)
-            tmpW.append(tmp)
-            tmp = np.dot(np.dot(primer,self.dLinCombB(currA)), (1/self.n))
-            print(tmp)
-            tmpb.append(tmp)
-        tmpW.reverse()
-        self.W = tmpW
-        tmpb.reverse()
-        self.b = tmpb
+X = np.matrix([[0,0,1,0,0,1,1,1],[0,1,0,0,1,1,0,1],[0,0,0,1,1,0,1,1]])
+Y = np.matrix([0,0,0,0,1,1,1,1])
+W = []
+W.append(np.matrix([[1,1,0],[1,0,1],[0,1,1]]))
+W.append(np.matrix([[1,0,1],[0,1,1]]))
+W.append(np.matrix([[1,-1]]))
+b = []
+b.append(np.matrix([[0],[0],[0]]))
+b.append(np.matrix([[0],[0]]))
+b.append(np.matrix([0]))
+a = "sig"
+l = "ce"
+alpha = 1
+iterations = 1000
+
+nn1 = NN(X, W, b, Y, a, l, alpha)
+
+while(iterations > 0):
+    risk = nn1.epoch()
+    print(risk)
+    risk = nn1.epoch()
+    print(risk)
+    iterations -= 1
