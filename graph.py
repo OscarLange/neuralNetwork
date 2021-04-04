@@ -1,3 +1,4 @@
+import numpy as np
 class Node:
     def __init__(self, id, pos):
         self.id = id
@@ -10,3 +11,6 @@ class Edge:
     def __init__(self, startPos, endPos):
         self.startPos = startPos
         self.endPos = endPos
+        self.rect = None
+
+    

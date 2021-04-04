@@ -55,6 +55,28 @@ def insideCircle(pos, circles):
             return center
     return None
 
+
+#remove a line if rightclicked on it
+def removeLines(pos, lines):
+    newlines = set()
+    positions = []
+    #check multiple collision points,
+    #as the rect of line is too big
+    positions.append(pos)
+    positions.append((pos[0]-margin,pos[1]))
+    positions.append((pos[0]+margin,pos[1]))
+    positions.append((pos[0],pos[1]-margin))
+    positions.append((pos[0],pos[1]+margin))
+    for line in lines:
+        collide = True
+        for position in positions:
+            if(not line.rect.collidepoint(position)):
+                collide = False
+                break
+        if(not collide):
+            newlines.add(line)
+    return newlines
+
 #function to calculate where position overlapps with another circle
 def overlappCircle(pos, circles):
     for center in circles:
@@ -99,6 +121,7 @@ def game_loop():
     popUpPos = (0,0)
     cutoff = []
     timer = 0
+    # huge main loop with different modes, has to be split up later
     while active:
         #user input
         for event in pygame.event.get():
@@ -126,6 +149,13 @@ def game_loop():
                         circle = insideCircle(pos, circles)
                         if(circle != None):
                             circles.remove(circle)
+                            toRemove = []
+                            for line in lines:
+                                if(line.startPos == circle.pos or line.endPos == circle.pos):
+                                    toRemove.append(line)
+                            for line in toRemove:
+                                lines.remove(line)
+                        lines = removeLines(pos, lines)
             elif(mode == "Connect" and timer >= 0.2):
                 if event.type==pygame.MOUSEMOTION:
                     lineEnd = pygame.mouse.get_pos()
@@ -154,19 +184,21 @@ def game_loop():
                             mode = "Standard"
                     else:
                         mode = "Standard"
+
         #reset screen 
         screen.fill(WHITE)
+        #draw every line for every edge
+        for line in lines:
+            line.rect = pygame.draw.line(screen, BLACK, line.startPos, line.endPos, lineThickness)
+        #draw circle for every Node in set
+        for circle in circles:
+            pygame.draw.circle(screen, WHITE, circle.pos, radius)
+            pygame.draw.circle(screen, BLACK, circle.pos, radius, lineThickness)
         #if the mode is Connect mode draw a line
         if(mode == "Connect"):
             pygame.draw.line(screen, BLACK, lineStart, lineEnd, lineThickness)
         elif(mode == "Circle"):
             screen.blit(popUp, popUpPos)
-        #draw circle for every Node in set
-        for circle in circles:
-            pygame.draw.circle(screen, BLACK, circle.pos, radius, lineThickness)
-        #draw every line for every edge
-        for line in lines:
-            pygame.draw.line(screen, BLACK, line.startPos, line.endPos, lineThickness)
         #reset window
         pygame.display.flip()
         #refresh time
