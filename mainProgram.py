@@ -1,6 +1,7 @@
 import numpy as np
 from neuralnetwork import NN
 from graph import Node, Edge
+from filereader import returnInput
 
 import pygame
 import time
@@ -8,6 +9,9 @@ import random
 
 #start lib
 pygame.init()
+#load pictures
+goImg = pygame.image.load('go.png')
+stopImg = pygame.image.load('stop.png')
 
 #define constants
 GREEN   = ( 0, 255, 0)
@@ -146,9 +150,57 @@ def keyToVal(eventKey):
         return None
 
 
+def runMode(circles, lines):
+    running = True
+    timer = 0
+
+    xMatrix, yMatrix = returnInput()
+
+    while(running):#user input
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == LEFT:
+                        pos = pygame.mouse.get_pos()
+                        circle = insideCircle(pos, circles)
+                        if(pos[0] < stopImg.get_width() and  pos[1] < stopImg.get_height()):
+                            running = False
+        #reset screen 
+        screen.fill(WHITE)
+        #draw buttons top left
+        screen.blit(stopImg, (0,0))
+        #draw every line for every edge
+        for line in lines:
+            line.rect = pygame.draw.line(screen, BLACK, line.startPos, line.endPos, lineThickness)
+            msg = popup_font.render(line.weight, True, RED)
+            text_width, text_height = popup_font.size(line.weight)
+            screen.blit(msg, (line.middle[0]-text_width/2,line.middle[1]))
+        #draw circle for every Node in set
+        for circle in circles:
+            pygame.draw.circle(screen, WHITE, circle.pos, radius)
+            if(circle.type == "input"):
+                pygame.draw.circle(screen, GREEN, circle.pos, radius, lineThickness)
+            else:
+                if(circle.type == "hidden"):
+                    pygame.draw.circle(screen, BLACK, circle.pos, radius, lineThickness)
+                else:
+                    pygame.draw.circle(screen, RED, circle.pos, radius, lineThickness)
+                if(circle.function != None):
+                    msg = popup_font.render(circle.function, True, BLACK)
+                    text_width, text_height = popup_font.size(circle.function)
+                    screen.blit(msg, (circle.pos[0]-text_width/2,circle.pos[1]-text_height/2))
+                msg = popup_font.render(circle.bias, True, BLUE)
+                text_width, text_height = popup_font.size(circle.bias)
+                screen.blit(msg, (circle.pos[0]-text_width/2,circle.pos[1]+text_height))
+        #reset window
+        pygame.display.flip()
+        #refresh time
+        timer += (clock.tick(fps)/1000)
+
 #main loop
-def game_loop():
-    id = 0
+def drawMode():
     active = True
     circles = set()
     lines = set()
@@ -172,7 +224,9 @@ def game_loop():
                     if event.button == LEFT:
                         pos = pygame.mouse.get_pos()
                         circle = insideCircle(pos, circles)
-                        if(circle != None):
+                        if(pos[0] < goImg.get_width() and  pos[1] < goImg.get_height()):
+                            runMode(circles,lines)
+                        elif(circle != None):
                             cutoff, popUp = circlePopup(circle.pos, options1, popup_height)
                             popUpPos = circle.pos
                             mode = "Circle"
@@ -184,8 +238,7 @@ def game_loop():
                                     timer = 0
                             if mode != "Line":
                                 if(not overlappCircle(pos, circles)):
-                                    circles.add(Node(id, pos))
-                                    id += 1
+                                    circles.add(Node(pos))
                                 else:
                                     message("Too close to other node!",RED)
                                     pygame.display.flip()
@@ -287,6 +340,8 @@ def game_loop():
                     mode = "Standard"
         #reset screen 
         screen.fill(WHITE)
+        #draw buttons top left
+        screen.blit(goImg, (0,0))
         #draw every line for every edge
         for line in lines:
             line.rect = pygame.draw.line(screen, BLACK, line.startPos, line.endPos, lineThickness)
@@ -321,4 +376,4 @@ def game_loop():
         timer += (clock.tick(fps)/1000)
 
 #start game
-game_loop()
+drawMode()

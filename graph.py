@@ -1,7 +1,6 @@
 import numpy as np
 class Node:
-    def __init__(self, id, pos):
-        self.id = id
+    def __init__(self, pos):
         self.pos = pos
         self.function = None
         self.bias = " "
@@ -22,12 +21,7 @@ class Node:
 
 class Edge:
     def __init__(self, startPos, endPos):
-        self.startPos = startPos
-        self.endPos = endPos
-        self.rect = None
-        self.weight = " "
-        middleX = np.abs(self.startPos[0] - self.endPos[0])/2
-        middleY = np.abs(self.startPos[1] - self.endPos[1])/2
+        self.startPos = startPosreturnInput()- self.endPos[1])/2
         if(self.startPos[0] > self.endPos[0]):
             middleX = self.startPos[0] - middleX
         else:
@@ -37,7 +31,6 @@ class Edge:
         else:
             middleY = self.endPos[1] - middleY
         self.middle = (middleX, middleY)
-        print(self.startPos, "|", self.endPos, "|", self.middle)
 
     def appendWeight(self, strVal):
         if(strVal == "-"):
