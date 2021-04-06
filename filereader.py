@@ -15,7 +15,6 @@ def returnInput():
             if(row[0] == "END"):
                 break
             numRows += 1
-        print(numRows, "|", numCols)
         x_matrix = np.empty((numRows, numCols))
         y_matrix = np.empty((1, numCols))
     
@@ -23,7 +22,6 @@ def returnInput():
         csv_reader = csv.reader(csv_file, delimiter=',')
         currRow = 0
         for row in csv_reader:
-            print(currRow)
             currCol = 0
             if(currRow < numRows):
                 for val in row:
@@ -34,8 +32,6 @@ def returnInput():
                     y_matrix[0, currCol] = float(val)
                     currCol += 1
             currRow += 1
-        print(x_matrix)
-        print(y_matrix)
         return (x_matrix, y_matrix)
 
         

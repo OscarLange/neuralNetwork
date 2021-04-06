@@ -1,6 +1,6 @@
 import numpy as np
 from neuralnetwork import NN
-from graph import Node, Edge
+from graph import Node, Edge, filterInput, filterConnections, filterEdge, filterNode
 from filereader import returnInput
 
 import pygame
@@ -149,12 +149,46 @@ def keyToVal(eventKey):
     else:
         return None
 
-
+# the runmode where the nn is trained with the data
 def runMode(circles, lines):
     running = True
     timer = 0
 
     xMatrix, yMatrix = returnInput()
+    currNodes = filterInput(circles)
+    if(xMatrix.shape[0] != len(currNodes)):
+        message("Dim(Input Matrix) not equal to Dim(Input Nodes):"+ str(xMatrix.shape[0]) + "!=" + str(len(currNodes)),RED)
+        pygame.display.flip()
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.button == LEFT:
+                            return
+    weightList = []
+    biasList = []
+    index = 0
+    #while loop for layers
+    while currNodes[0].type != "output":
+        nxtNodes = filterConnections(currNodes[0], lines, circles)
+        weightList.append(np.empty((len(nxtNodes),len(currNodes))))
+        for i in range(len(nxtNodes)):
+            for j in range(len(currNodes)):
+                line = filterEdge(nxtNodes[i].pos, currNodes[j].pos, lines)
+                weightList[index][i][j] = line.getWeight()
+                line.visited = True
+        biasList.append(np.empty((len(nxtNodes),1))) 
+        for i in range(len(nxtNodes)):
+            biasList[index][i][0] = nxtNodes[i].getBias()
+        currNodes = nxtNodes
+        index +=1
+
+    for line in lines:
+        line.visited = False
+
+    nn1 = NN(xMatrix, weightList, biasList, yMatrix, "sig", "ce", 1)
 
     while(running):#user input
         for event in pygame.event.get():
@@ -169,6 +203,9 @@ def runMode(circles, lines):
                             running = False
         #reset screen 
         screen.fill(WHITE)
+        #calculate one epoch of nn
+        risk = nn1.epoch()
+        print(risk)
         #draw buttons top left
         screen.blit(stopImg, (0,0))
         #draw every line for every edge
@@ -199,11 +236,70 @@ def runMode(circles, lines):
         #refresh time
         timer += (clock.tick(fps)/1000)
 
+#already draw a basic nn
+def quickStart():
+    circles = set()
+    lines = set()
+    xOffset = (width - radius*8)/5
+    yOffset = (height - radius*6)/4
+    x = xOffset + radius
+    y = yOffset + radius
+    oldPos = []
+    for i in range(3):
+        oldPos.append((x,y))
+        tmpNode = Node((x,y))
+        tmpNode.type = "input"
+        circles.add(tmpNode)
+        y += yOffset + (2*radius)
+    x2 = x + xOffset + (2*radius)
+    y2 = yOffset + radius
+    tpmWeights = [[1,1,0],[1,0,1],[0,1,1]]
+    newPos = []
+    for i in range(3):
+        newPos.append((x2,y2))
+        tmpNode = Node((x2,y2))
+        tmpNode.function = "sigmoid"
+        tmpNode.bias = "0"
+        circles.add(tmpNode)
+        for j in range(len(oldPos)):
+            tmpLine = Edge(oldPos[j],(x2,y2))
+            tmpLine.weight = str(tpmWeights[i][j])
+            lines.add(tmpLine)
+        y2 += yOffset + (2*radius)
+    yOffset = (height - radius*4)/3
+    x = x2 + xOffset + (2*radius)
+    y = yOffset + radius
+    tpmWeights = [[1,0,1],[0,1,1]]
+    oldPos = []
+    for i in range(2):
+        oldPos.append((x,y))
+        tmpNode = Node((x,y))
+        tmpNode.function = "sigmoid"
+        tmpNode.bias = "0"
+        circles.add(tmpNode)
+        for j in range(len(newPos)):
+            tmpLine = Edge(newPos[j],(x,y))
+            tmpLine.weight = str(tpmWeights[i][j])
+            lines.add(tmpLine)
+        y += yOffset + (2*radius)
+    x += xOffset + (2*radius)
+    y = height/2
+    tmpNode = Node((x,y))
+    tmpNode.function = "sigmoid"
+    tmpNode.type = "output"
+    tmpNode.bias = "0"
+    circles.add(tmpNode)
+    tpmWeights = [[1,-1]]
+    for j in range(len(oldPos)):
+        tmpLine = Edge(oldPos[j],(x,y))
+        tmpLine.weight = str(tpmWeights[0][j])
+        lines.add(tmpLine)
+    return (circles,lines)
+
 #main loop
 def drawMode():
     active = True
-    circles = set()
-    lines = set()
+    circles,lines = quickStart()
     mode = "Standard"
     lineStart = (0,0)
     lineEnd = (0,0)
@@ -370,6 +466,10 @@ def drawMode():
             pygame.draw.line(screen, BLACK, lineStart, lineEnd, lineThickness)
         elif(mode == "Circle" or mode == "Function" or mode == "Type"):
             screen.blit(popUp, popUpPos)
+        
+        msg = popup_font.render(str(pygame.mouse.get_pos()), True, BLACK)
+        text_width, text_height = popup_font.size(str(pygame.mouse.get_pos()))
+        screen.blit(msg, (width-text_width,height-text_height))
         #reset window
         pygame.display.flip()
         #refresh time
