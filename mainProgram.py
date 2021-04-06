@@ -12,6 +12,7 @@ pygame.init()
 #load pictures
 goImg = pygame.image.load('go.png')
 stopImg = pygame.image.load('stop.png')
+retryImg = pygame.image.load('retry.png')
 
 #define constants
 GREEN   = ( 0, 255, 0)
@@ -366,6 +367,8 @@ def drawMode():
                         circle = insideCircle(pos, circles)
                         if(pos[0] < goImg.get_width() and  pos[1] < goImg.get_height()):
                             runMode(circles,lines)
+                        elif(pos[0] < (goImg.get_width()+retryImg.get_width()) and  pos[1] < retryImg.get_height()):
+                            circles,lines = quickStart()
                         elif(circle != None):
                             cutoff, popUp = circlePopup(circle.pos, options1, popup_height)
                             popUpPos = circle.pos
@@ -484,6 +487,7 @@ def drawMode():
         screen.fill(WHITE)
         #draw buttons top left
         screen.blit(goImg, (0,0))
+        screen.blit(retryImg, (goImg.get_width(),0))
         #draw every line for every edge
         for line in lines:
             line.rect = pygame.draw.line(screen, BLACK, line.startPos, line.endPos, lineThickness)
