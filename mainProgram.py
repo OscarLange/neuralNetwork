@@ -26,6 +26,10 @@ popup_width = 100
 popup_height = 148
 popup2_height = 75
 popup3_height = 112
+lineChartHeight = 450
+lineChartWidth = 800
+lineChartPos = (width-lineChartWidth, height-lineChartHeight)
+granularity = 10
 radius = 40
 lineThickness = 4
 margin = 10
@@ -104,7 +108,6 @@ def insideRectangle(pos, rectPos, size):
 
 #create a popup for when somebody selects a node
 def circlePopup(currPos, options, height):
-    opened = True 
     popUp = pygame.Surface((popup_width,height))
     popUp.fill(GREY)
     pygame.draw.rect(popUp, BLACK, (0,0,popup_width,height), lineThickness)
@@ -119,6 +122,41 @@ def circlePopup(currPos, options, height):
         cutoff.append(currheight + currPos[1])
         currheight += (margin + lineThickness)
     return (cutoff, popUp)
+
+#create a surface to draw the lineChart on
+def lineChart(risk):
+    lineChart = pygame.Surface((lineChartWidth,lineChartHeight))
+    lineChart.fill(WHITE)
+    pygame.draw.rect(lineChart, BLACK, (0,0,lineChartWidth,lineChartHeight), lineThickness)
+
+    maxRisk = max(risk)
+    riskGranularity = maxRisk/granularity
+    yOffset = (lineChartHeight - (3*margin))/(granularity)
+    y = margin
+    currRisk = maxRisk
+    text_width, text_height = popup_font.size(str(round(currRisk, 5)))
+    for i in range(granularity+1):
+        txt = str(round(currRisk, 5))
+        msg = popup_font.render(txt, True, BLACK)
+        lineChart.blit(msg, (margin,y-text_height/4))
+        pygame.draw.line(lineChart, BLACK, (1.5*margin+text_width,y), (2.5*margin+text_width,y), lineThickness)
+        y += yOffset
+        currRisk -= riskGranularity
+    xgraphOffset = 2*margin+text_width
+    xOffset = (lineChartWidth - (xgraphOffset + margin))/(len(risk)-1)
+    yOffset = (lineChartHeight-(2*margin))/maxRisk
+    x = xgraphOffset
+    for i in range(1,len(risk), +1):
+        pos1 = (x, margin + ((maxRisk - risk[i-1])*yOffset))
+        x += xOffset
+        pos2 = (x, margin + ((maxRisk - risk[i])*yOffset))
+        pygame.draw.line(lineChart, BLUE, pos1, pos2, lineThickness)
+
+    pygame.draw.line(lineChart, BLACK, (xgraphOffset, margin), (xgraphOffset, lineChartHeight-margin), lineThickness)
+    pygame.draw.line(lineChart, BLACK, (xgraphOffset, lineChartHeight-margin), (lineChartWidth - margin, lineChartHeight-margin), lineThickness)
+
+    return lineChart
+
 
 #function to convert keypress to nummeric value (including minus)
 def keyToVal(eventKey):
@@ -189,6 +227,8 @@ def runMode(circles, lines):
         line.visited = False
 
     nn1 = NN(xMatrix, weightList, biasList, yMatrix, "sig", "ce", 1)
+    risk = []
+    risk.append(nn1.epoch())
 
     while(running):#user input
         for event in pygame.event.get():
@@ -204,8 +244,7 @@ def runMode(circles, lines):
         #reset screen 
         screen.fill(WHITE)
         #calculate one epoch of nn
-        risk = nn1.epoch()
-        print(risk)
+        risk.append(nn1.epoch())
         #draw buttons top left
         screen.blit(stopImg, (0,0))
         #draw every line for every edge
@@ -231,6 +270,9 @@ def runMode(circles, lines):
                 msg = popup_font.render(circle.bias, True, BLUE)
                 text_width, text_height = popup_font.size(circle.bias)
                 screen.blit(msg, (circle.pos[0]-text_width/2,circle.pos[1]+text_height))
+        #draw line chart
+
+        screen.blit(lineChart(risk), lineChartPos)
         #reset window
         pygame.display.flip()
         #refresh time
