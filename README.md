@@ -12,6 +12,8 @@ The output layer has to be 1 node, as at this time only the binary cross entropy
 
 Everything is setup from the get go, so just pressing the button in the top left corner starts the training.
 
+![Screenshot](train.png)
+
 ## Configuration
 
 There are two main ways to interact with the neural network.
