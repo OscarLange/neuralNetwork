@@ -37,7 +37,7 @@ LEFT = 1
 RIGHT = 3
 fps = 120
 options1 = ["Connect", "Function", "Bias", "Type"]
-options2 = ["None", "Sigmoid"]
+options2 = ["None", "Sigmoid", "Relu"]
 options3 = ["input", "hidden", "output"]
 
 font_style = pygame.font.SysFont(None, 50)
@@ -207,11 +207,13 @@ def runMode(circles, lines):
                             return
     weightList = []
     biasList = []
+    activationList = []
     index = 0
     #while loop for layers
     while currNodes[0].type != "output":
         nxtNodes = filterConnections(currNodes[0], lines, circles)
         weightList.append(np.empty((len(nxtNodes),len(currNodes))))
+        activationList.append(nxtNodes[0].function)
         for i in range(len(nxtNodes)):
             for j in range(len(currNodes)):
                 line = filterEdge(nxtNodes[i].pos, currNodes[j].pos, lines)
@@ -226,7 +228,7 @@ def runMode(circles, lines):
     for line in lines:
         line.visited = False
 
-    nn1 = NN(xMatrix, weightList, biasList, yMatrix, "sig", "ce", 1)
+    nn1 = NN(xMatrix, weightList, biasList, yMatrix, activationList, "ce", 1)
     risk = []
     risk.append(nn1.epoch())
 
@@ -300,7 +302,7 @@ def quickStart():
     for i in range(3):
         newPos.append((x2,y2))
         tmpNode = Node((x2,y2))
-        tmpNode.function = "sigmoid"
+        tmpNode.function = "Relu"
         tmpNode.bias = "0"
         circles.add(tmpNode)
         for j in range(len(oldPos)):
@@ -316,7 +318,7 @@ def quickStart():
     for i in range(2):
         oldPos.append((x,y))
         tmpNode = Node((x,y))
-        tmpNode.function = "sigmoid"
+        tmpNode.function = "Sigmoid"
         tmpNode.bias = "0"
         circles.add(tmpNode)
         for j in range(len(newPos)):
@@ -327,7 +329,7 @@ def quickStart():
     x += xOffset + (2*radius)
     y = height/2
     tmpNode = Node((x,y))
-    tmpNode.function = "sigmoid"
+    tmpNode.function = "Sigmoid"
     tmpNode.type = "output"
     tmpNode.bias = "0"
     circles.add(tmpNode)
@@ -420,7 +422,7 @@ def drawMode():
                                 timer = 0
                             elif(pos[1] < cutoff[1]):
                                 mode = options1[1]
-                                cutoff, popUp = circlePopup(popUpPos, options2, popup2_height)
+                                cutoff, popUp = circlePopup(popUpPos, options2, popup3_height)
                                 timer = 0
                             elif(pos[1] < cutoff[2]):
                                 mode = options1[2]
@@ -434,12 +436,14 @@ def drawMode():
                     if event.button == LEFT:
                         pos = pygame.mouse.get_pos()
                         tmp = popUpPos
-                        if(insideRectangle(pos, tmp, ((popup_width,popup2_height)))):
+                        if(insideRectangle(pos, tmp, ((popup_width,popup3_height)))):
                             circle = insideCircle(popUpPos, circles)
                             if(pos[1] < cutoff[0]):
                                 circle.function = None
                             elif(pos[1] < cutoff[1]):
-                                circle.function = "sigmoid"
+                                circle.function = "Sigmoid"
+                            elif(pos[1] < cutoff[2]):
+                                circle.function = "Relu"
                     mode = "Standard"
             elif(mode == "Bias" and timer >= 0.2):
                 if event.type == pygame.KEYDOWN:

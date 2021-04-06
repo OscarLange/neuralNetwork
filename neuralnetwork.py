@@ -33,6 +33,10 @@ class NN:
     def sigmoid(self, x):
         return 1/(1+np.exp(-x))
 
+    #relu functio for 1 element
+    def relu(self, x):
+        return x*(x>0)
+    
     #calculate the cross-entropy loss of a prediction matrix A
     def crossEntropyLoss(self, A):
         # - (Y * ln(A) + (1-Y) * ln(1-A))
@@ -48,25 +52,50 @@ class NN:
 
     #return derivative of outputlayer with given loss function 
     #and outputlayer activation function
-    def dOutput(self,A):
+    def dOutput(self,A, index):
         if(self.l == "ce"):
-            if(self.a == "sig"):
+            if(self.a[index] == "Sigmoid"):
                 return self.dCeSig(A)
+            elif(self.a[index] == "Relu"):
+                return self.dCeRelu
+
+    #partial derivative of crossEntropyLoss regarding any acitvation function 
+    def dCe(self, A):
+        return np.subtract(np.divide(negate(self.Y), negate(A)), np.divide(self.Y, A))
 
     #partial derivative of crossEntropyLoss regarding the sigmoid
     #times the derivative of the sigmoid regarding linear Comb Z
     def dCeSig(self, A):
         return np.subtract(A, self.Y)
 
+    #partial derivative of crossEntropyLoss regarding the relu function
+    #times the derivative of the relu regarding linear Comb Z
+    def dCeRelu(self, A):
+        return np.multiply(self.dCe(A), self.dRelu(A))
+
+    #partial derivative of the relu function 
+    def dRelu(self, A):
+        X = A
+        X[X<=0] = 0
+        X[X>0] = 1
+        return X
+        
     #return partial derivative of hidden layer activation function
-    def dhidden(self, dA, A):
-        if(self.a == "sig"):
+    def dhidden(self, dA, A, index):
+        if(self.a[index] == "Sigmoid"):
             return self.dlClC(dA,A)
+        elif(self.a[index] == "Relu"):
+            return self.dReluLC(dA, A)
 
     #partial derivative of the sigmoid function regarding 
     # the linear combination Z=W*A+b 
     def dlClC(self, dA, A):
         return np.multiply(dA, np.multiply(A, self.negate(A)))
+
+    #partial derivative of the relu function regarding 
+    # the linear combination Z=W*A+b 
+    def dReluLC(self, dA, A):
+        return np.multiply(dA, self.dRelu(A))
 
     #partial derivative of Z=(A*W+b) regarding W 
     #times the partial derivative of output regarding Z = dZ
@@ -106,9 +135,13 @@ class NN:
             currW = self.W[index]
             currB = self.b[index]
             Z = np.add(np.dot(currW,currA),currB)
-            if(self.a == "sig"):
+            if(self.a[index] == "Sigmoid"):
                 #calculate activation function sig(Z)
                 currA = self.sigmoid(Z)
+                A.append(currA)
+            elif(self.a[index] == "Relu"):
+                #calculate activation function relu(Z)
+                currA = self.relu(Z)
                 A.append(currA)
         return A
 
@@ -122,10 +155,10 @@ class NN:
         dA = None
         for index in range(self.h, -1, -1):
             if(index == self.h):
-                dZ = self.dOutput(A[index+1])
+                dZ = self.dOutput(A[index+1], index)
             else:
                 dA = self.dLinCombA(dZ, self.W[index+1])
-                dZ = self.dhidden(dA, A[index+1])    
+                dZ = self.dhidden(dA, A[index+1], index)    
             dW.append(self.dLinCombW(dZ, A[index]))
             db.append(self.dLinCombB(dZ))
         #reverse list as backpropagation is backwards
