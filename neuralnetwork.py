@@ -56,22 +56,15 @@ class NN:
         if(self.l == "ce"):
             if(self.a[index] == "Sigmoid"):
                 return self.dCeSig(A)
-            elif(self.a[index] == "Relu"):
-                return self.dCeRelu
 
     #partial derivative of crossEntropyLoss regarding any acitvation function 
     def dCe(self, A):
-        return np.subtract(np.divide(negate(self.Y), negate(A)), np.divide(self.Y, A))
+        return np.subtract(np.divide(self.negate(self.Y), self.negate(A)), np.divide(self.Y, A))
 
     #partial derivative of crossEntropyLoss regarding the sigmoid
     #times the derivative of the sigmoid regarding linear Comb Z
     def dCeSig(self, A):
         return np.subtract(A, self.Y)
-
-    #partial derivative of crossEntropyLoss regarding the relu function
-    #times the derivative of the relu regarding linear Comb Z
-    def dCeRelu(self, A):
-        return np.multiply(self.dCe(A), self.dRelu(A))
 
     #partial derivative of the relu function 
     def dRelu(self, A):
